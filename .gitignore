@@ -1,0 +1,8 @@
+*.exe
+*.asv
+*.swp
+test.prj
+Field.prj
+*.c
+*.log
+*.cal
