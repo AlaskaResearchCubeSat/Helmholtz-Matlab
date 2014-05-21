@@ -56,42 +56,36 @@ classdef cage_control < hgsetget
     %static methods, called by refernecing classname rather than class
     %instance
     methods(Static)
-        function ai=open_mag()
+        function session=open_mag()
             % ai=open_mag()
             % used to open an analog input interface to the magnetometer
 
             
             %open data acquisition card
-            ai = analoginput('nidaq','Dev1');
+            session = daq.createSession('ni');
+            %names for mag channels
+            names={'X-mag','Y-mag','Z-mag'};
             %add magnetometer X, Y, and Z channels
-            addchannel(ai,0:2,{'X-mag','Y-mag','Z-mag'});
-            %set units to gauss
-            ai.channel.Units='Gauss';
-            %rng=[-1 1];
-            %rng=[-2 2];
-            rng=[-5 5];
-            ai.channel.InputRange=rng;
-            ai.channel.SensorRange=rng;
-            ai.channel.UnitsRange=rng;
-            %set channels to single ended mode
-            set(ai,'InputType','SingleEnded');
-            %set input range to +/-2V
+            for k=0:2
+                c=session.addAnalogInputChannel('Helmholtz',['ai' num2str(k)],'Voltage');
+                set(c,'Coupling','DC');
+                set(c,'TerminalConfig','SingleEnded');
+                set(c,'Range',[-5 5]);
+                set(c,'Name',names{k+1});
+            end
+           
             %set sample rate to 10 sps
-            fs=10;
-            set(ai,'SampleRate',fs);
-            %set number of samples per trigger
-            set(ai,'SamplesPerTrigger',10);
-            set(ai,'ChannelSkewMode','Equisample');
-            %run until stopped
-            set(ai,'TriggerRepeat',1); 
+            set(session,'Rate',10) 
+            %set scan time to 1 sec
+            set(session,'DurationInSeconds',1);
         end
-        function close_mag(ai)
-            %close_mag(ai)
+        function close_mag(session)
+            %close_mag(session)
             %close the magnetomitor interface and stop all data acquisition
             
             %stop and close data acquisition
-            stop(ai);
-            delete(ai);    
+            session.stop();
+            delete(session);    
         end
     end
     
@@ -122,17 +116,17 @@ classdef cage_control < hgsetget
             if(mag)
                 %open magnetometer
                 obj.mag=obj.open_mag();
-                %Bm=get(obj,'Bm');
+                Bm=get(obj,'Bm');
             else
                 obj.mag=[];
             end
 
             %open digital lines for direction control
-            obj.dir=digitalio('nidaq','Dev1');
+            %obj.dir=digitalio('nidaq','Dev1');
             %add lines for X,Y, and Z direction
-            addline(obj.dir,0:2,1,'out');
+            %addline(obj.dir,0:2,1,'out');
             %set all directions to zero
-            putvalue(obj.dir,0);
+            %putvalue(obj.dir,0);
         end
         function delete(obj)
            %stop and close the power supplies
@@ -144,9 +138,9 @@ classdef cage_control < hgsetget
                 cage_control.close_mag(obj.mag);
             end
             %clear all outputs
-            putvalue(obj.dir,0)
+            %putvalue(obj.dir,0)
             %delete digitial IO object
-            delete(obj.dir);
+            %delete(obj.dir);
         end
         function val=get.psObj(obj)
             val={obj.x_obj,obj.y_obj,obj.z_obj};
@@ -172,7 +166,7 @@ classdef cage_control < hgsetget
                     It=I(k);
                     neg=It<0;
                     %switch current direction for negative currents
-                    putvalue(obj.dir.Line(k),neg);
+                    %putvalue(obj.dir.Line(k),neg);
                     %get magnitude of current
                     It=abs(It);
                     %set the maximum current to 8A and give a warning
@@ -523,14 +517,8 @@ classdef cage_control < hgsetget
             zlabel(hAxes,'z-axis Field [Gauss]');
         end
         function Bm=get.Bm(obj)
-            %start measurement
-            start(obj.mag);
             %read measurement
-            read_dat=getdata(obj.mag);
-            %average measurement values
-            Bm=mean(read_dat);
-            %stop when done
-            stop(obj.mag);
+            Bm=obj.mag.inputSingleScan();
         end
         function Bs=get.Bs(obj)
             Bs=obj.ItoB(obj.Is);
