@@ -62,7 +62,7 @@ classdef cage_control < hgsetget
 
             
             %open data acquisition card
-            ai = analoginput('nidaq','Dev1');
+            ai = analoginput('nidaq','Helmholtz');
             %add magnetometer X, Y, and Z channels
             addchannel(ai,0:2,{'X-mag','Y-mag','Z-mag'});
             %set units to gauss
@@ -128,7 +128,7 @@ classdef cage_control < hgsetget
             end
 
             %open digital lines for direction control
-            obj.dir=digitalio('nidaq','Dev1');
+            obj.dir=digitalio('nidaq','Helmholtz');
             %add lines for X,Y, and Z direction
             addline(obj.dir,0:2,1,'out');
             %set all directions to zero
