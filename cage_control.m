@@ -51,6 +51,7 @@ classdef cage_control < hgsetget
             x_addr=[1 2];   %addresses for x axis
             y_addr=[3 4];   %addresses for y axis
             z_addr=[5 6];   %addresses for z axis
+            addr_names={'X1','X2','Y1','Y2','Z1','Z2'};
     end
 
     %static methods, called by refernecing classname rather than class
@@ -257,6 +258,50 @@ classdef cage_control < hgsetget
             I=obj.BtoI(Bs);
             %set currents to calculated values
             obj.Is=I;
+        end
+        function test(obj)
+            %check to see if connections to coils are working by running
+            %test currents through the coils
+            
+            %save old Is
+            I_save=obj.Is;
+            %set all currents to 5A
+            obj.Is=5*ones(1,3);
+            %initialize arrays
+            V=zeros(size(obj.allObj));
+            I=zeros(size(obj.allObj));
+            %test each supply
+            for k=(1:length(obj.allObj))
+                %measure voltage
+                fprintf(obj.allObj(k),'MEAS:VOLT?');
+                %get result
+                V(k)=str2double(fgetl(obj.allObj(k)));
+                %measure current
+                fprintf(obj.allObj(k),'MEAS:CURR?');
+                %get result
+                I(k)=str2double(fgetl(obj.allObj(k)));
+            end
+            %calculate resistance
+            R=V./I;
+            %check if resistance is greater than 20 ohms
+            open_coil=R>20;
+            %check for any open coils
+            if(any(open_coil))
+                %restore Is
+                obj.Is=I_save;
+                %get number of open coils
+                num=sum(open_coil);
+                %check if number is one
+                if(num==1)
+                    %give error stating which coil is not working
+                    error('HELMHOLTZ:badConnection','The %s coil has a bad connection',obj.addr_names{open_coil});
+                else
+                    %give an error stating how many coils are not working
+                    error('HELMHOLTZ:badConnection','There are %i coils with bad connections',num);
+                end
+            end
+            %restore Is
+            obj.Is=I_save;
         end
         function err=calibrate(obj)
             % err=calibrate()
