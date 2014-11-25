@@ -128,6 +128,14 @@ classdef cage_control < hgsetget
             %addline(obj.dir,0:2,1,'out');
             %set all directions to zero
             %putvalue(obj.dir,0);
+            
+            %test connections before proceding
+            try
+                obj.test()
+            catch err
+               delete(obj)
+               rethrow(err);
+            end
         end
         function delete(obj)
            %stop and close the power supplies
