@@ -318,8 +318,21 @@ classdef cage_control < hgsetget
             obj.on();
             
             hP=waitbar(0,'Calibrating Helmholtz Cage Please Wait...','WindowStyle','modal',...
-                'CreateCancelBtn',@prog_close,'name','Calibrating');
+                'CreateCancelBtn',@prog_close,'name','Testing Connections');
 
+            try
+                %test coil connections just in case
+                obj.test();
+            catch err
+                %close progress bar
+                close(hP);
+                %rethrow error
+                rethrow(err);
+            end
+            
+            %set title to calibrationg
+            set(hP,'name','Calibrating');
+            
             %calibration current values
             %cal_cur=(0:0.1:6);
             %cal_cur=(0:0.1:3);
