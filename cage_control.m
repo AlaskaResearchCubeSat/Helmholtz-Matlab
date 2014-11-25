@@ -267,8 +267,8 @@ classdef cage_control < hgsetget
             
             %save old Is
             I_save=obj.Is;
-            %set all currents to 5A
-            obj.Is=5*ones(1,3);
+            %set all currents to 0.5 A
+            obj.Is=0.5*ones(1,3);
             %initialize arrays
             V=zeros(size(obj.allObj));
             I=zeros(size(obj.allObj));
